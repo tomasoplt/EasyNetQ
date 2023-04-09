@@ -5,18 +5,18 @@ var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
 using var bus = RabbitHutch.CreateBus(
-    "host=localhost;publisherConfirms=True",
+    "host=localhost:5673;publisherConfirms=True",
     x => x.EnableNewtonsoftJson()
         .EnableAlwaysNackWithoutRequeueConsumerErrorStrategy()
         .EnableConsoleLogger()
 );
 
 var eventQueue = await bus.Advanced.QueueDeclareAsync(
-    "Events",
-    c => c.WithQueueType(QueueType.Quorum)
-        .WithOverflowType(OverflowType.RejectPublish),
-    cts.Token
-);
+    "q.woc.fan", c => c.WithQueueType(QueueType.Classic), cts.Token).ConfigureAwait(false); ;
+
+var fanOutExchange = await bus.Advanced.ExchangeDeclareAsync(
+    "ex.woc.fan", ExchangeType.Fanout).ConfigureAwait(false);
+
 
 using var eventsConsumer = bus.Advanced.Consume(eventQueue, (_, _, _) => { });
 
