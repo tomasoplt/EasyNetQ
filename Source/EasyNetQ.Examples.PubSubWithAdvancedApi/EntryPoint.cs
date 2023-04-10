@@ -11,12 +11,19 @@ using var bus = RabbitHutch.CreateBus(
         .EnableConsoleLogger()
 );
 
-var eventQueue = await bus.Advanced.QueueDeclareAsync(
-    "q.woc.fan", c => c.WithQueueType(QueueType.Classic), cts.Token).ConfigureAwait(false); ;
+var eventQueue = await bus.Advanced
+    .QueueDeclareAsync("q.woc.fan", c => c.WithQueueType(QueueType.Classic), cts.Token)
+    .ConfigureAwait(false); ;
 
-var fanOutExchange = await bus.Advanced.ExchangeDeclareAsync(
-    "ex.woc.fan", ExchangeType.Fanout).ConfigureAwait(false);
+var fanOutExchange = await bus.Advanced
+    .ExchangeDeclareAsync("ex.woc.fan", ExchangeType.Fanout)
+    .ConfigureAwait(false);
 
+var exChangeBinding = await bus.Advanced
+    .BindAsync(fanOutExchange, eventQueue, string.Empty)
+    .ConfigureAwait(false);
+
+await bus.Advanced.PublishAsync(fanOutExchange, string.Empty, true, new Message<string>("hello"));
 
 using var eventsConsumer = bus.Advanced.Consume(eventQueue, (_, _, _) => { });
 
