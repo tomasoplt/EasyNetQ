@@ -4,9 +4,8 @@ using EasyNetQ.Topology;
 var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, _) => cts.Cancel();
 
-using var bus = RabbitHutch.CreateBus(
-    "host=localhost:5673;publisherConfirms=True",
-    x => x.EnableNewtonsoftJson()
+using var bus = RabbitHutch
+    .CreateBus("host=localhost:5673;publisherConfirms=True",x => x.EnableNewtonsoftJson()
         .EnableAlwaysNackWithoutRequeueConsumerErrorStrategy()
         .EnableConsoleLogger()
 );
@@ -23,7 +22,9 @@ var exChangeBinding = await bus.Advanced
     .BindAsync(fanOutExchange, eventQueue, string.Empty)
     .ConfigureAwait(false);
 
-await bus.Advanced.PublishAsync(fanOutExchange, string.Empty, true, new Message<string>("hello"));
+await bus.Advanced
+    .PublishAsync(fanOutExchange, string.Empty, true, new Message<string>("hello"))
+    .ConfigureAwait(false); ;
 
 using var eventsConsumer = bus.Advanced.Consume(eventQueue, (_, _, _) => { });
 
